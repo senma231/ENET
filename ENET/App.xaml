@@ -1,0 +1,42 @@
+﻿<Application x:Class="ENET.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:ENET"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- 合并资源字典 -->
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- 应用程序样式 -->
+            <Style TargetType="Button">
+                <Setter Property="Padding" Value="10,5"/>
+                <Setter Property="Margin" Value="2"/>
+            </Style>
+
+            <Style TargetType="TextBox">
+                <Setter Property="Padding" Value="5,3"/>
+                <Setter Property="Margin" Value="2"/>
+            </Style>
+
+            <Style TargetType="ComboBox">
+                <Setter Property="Padding" Value="5,3"/>
+                <Setter Property="Margin" Value="2"/>
+            </Style>
+
+            <Style TargetType="DataGrid">
+                <Setter Property="Margin" Value="2"/>
+                <Setter Property="AutoGenerateColumns" Value="False"/>
+                <Setter Property="CanUserAddRows" Value="False"/>
+                <Setter Property="CanUserDeleteRows" Value="False"/>
+                <Setter Property="IsReadOnly" Value="False"/>
+                <Setter Property="AlternatingRowBackground" Value="#FFF0F0F0"/>
+                <Setter Property="RowHeaderWidth" Value="0"/>
+                <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="#FFABADB3"/>
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

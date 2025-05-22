@@ -1,0 +1,25 @@
+FRP GUI客户端打包说明
+====================
+
+已完成的打包文件：
+1. FrpcGui_Portable.zip - 便携式版本，解压后即可使用
+2. FrpcGui_Setup.iss - 安装程序脚本文件（需要使用Inno Setup编译）
+
+创建安装程序步骤：
+1. 下载并安装Inno Setup: https://jrsoftware.org/isdl.php
+2. 安装完成后，打开Inno Setup Compiler
+3. 打开FrpcGui_Setup.iss文件
+4. 点击"Build"菜单中的"Compile"选项（或按F9键）
+5. 编译完成后，将在当前目录生成FrpcGui_Setup.exe安装程序
+
+注意事项：
+- 便携式版本解压后即可使用，无需安装
+- 安装版本会在"开始菜单"和桌面创建快捷方式
+- 两个版本都已经修复了以下问题：
+  1. 打开程序不再显示CMD窗口
+  2. 应用程序图标已正确设置
+  3. 窗口未最大化时代理列表也能正常显示
+
+使用说明：
+- 便携式版本：解压后运行FrpcGui.exe
+- 安装版本：运行FrpcGui_Setup.exe进行安装，然后通过开始菜单或桌面快捷方式启动

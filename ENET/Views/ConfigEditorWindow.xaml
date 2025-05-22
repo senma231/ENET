@@ -1,0 +1,128 @@
+<Window x:Class="ENET.Views.ConfigEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ENET.Views"
+        mc:Ignorable="d"
+        Title="编辑配置" Height="450" Width="600" WindowStartupLocation="CenterOwner">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 基本配置 -->
+        <GroupBox Header="基本配置" Grid.Row="0" Margin="0,0,0,10">
+            <Grid Margin="5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Label Content="配置名称:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding Config.Name}" Grid.Row="0" Grid.Column="1" Margin="5"/>
+
+                <Label Content="服务器地址:" Grid.Row="0" Grid.Column="2" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding Config.ServerAddress}" Grid.Row="0" Grid.Column="3" Margin="5"/>
+
+                <Label Content="服务器端口:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding Config.ServerPort}" Grid.Row="1" Grid.Column="1" Margin="5"/>
+
+                <Label Content="认证令牌:" Grid.Row="1" Grid.Column="2" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding Config.Token}" Grid.Row="1" Grid.Column="3" Margin="5"/>
+
+                <Label Content="启用TLS:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>
+                <CheckBox IsChecked="{Binding Config.EnableTls}" Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" Margin="5"/>
+            </Grid>
+        </GroupBox>
+
+        <!-- 代理配置 -->
+        <GroupBox Header="代理配置" Grid.Row="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 代理列表 -->
+                <ListBox ItemsSource="{Binding Config.Proxies}" SelectedItem="{Binding SelectedProxy}" Grid.Column="0" Margin="5">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- 代理详情 -->
+                <Grid Grid.Column="1" Width="300" Margin="5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 按钮 -->
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,5">
+                        <Button Content="添加" Command="{Binding AddProxyCommand}" Width="80" Margin="0,0,5,0"/>
+                        <Button Content="删除" Command="{Binding RemoveProxyCommand}" Width="80"/>
+                    </StackPanel>
+
+                    <!-- 代理详情编辑 -->
+                    <Grid Grid.Row="1" IsEnabled="{Binding SelectedProxy, Converter={StaticResource NullToBoolConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Label Content="名称:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding SelectedProxy.Name}" Grid.Row="0" Grid.Column="1" Margin="5"/>
+
+                        <Label Content="类型:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
+                        <ComboBox SelectedValue="{Binding SelectedProxy.Type}" Grid.Row="1" Grid.Column="1" Margin="5">
+                            <ComboBoxItem Content="tcp"/>
+                            <ComboBoxItem Content="udp"/>
+                            <ComboBoxItem Content="http"/>
+                            <ComboBoxItem Content="https"/>
+                            <ComboBoxItem Content="stcp"/>
+                        </ComboBox>
+
+                        <Label Content="本地IP:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding SelectedProxy.LocalIp}" Grid.Row="2" Grid.Column="1" Margin="5"/>
+
+                        <Label Content="本地端口:" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding SelectedProxy.LocalPort}" Grid.Row="3" Grid.Column="1" Margin="5"/>
+
+                        <Label Content="远程端口:" Grid.Row="4" Grid.Column="0" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding SelectedProxy.RemotePort}" Grid.Row="4" Grid.Column="1" Margin="5"/>
+
+                        <Label Content="自定义域名:" Grid.Row="5" Grid.Column="0" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding SelectedProxy.CustomDomains}" Grid.Row="5" Grid.Column="1" Margin="5"/>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </GroupBox>
+
+        <!-- 按钮 -->
+        <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Content="确定" IsDefault="True" Width="80" Margin="0,0,10,0" Click="OkButton_Click"/>
+            <Button Content="取消" IsCancel="True" Width="80" Click="CancelButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

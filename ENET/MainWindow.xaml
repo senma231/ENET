@@ -1,0 +1,375 @@
+﻿<Window x:Class="ENET.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ENET"
+        xmlns:viewmodels="clr-namespace:ENET.ViewModels"
+        xmlns:tb="http://www.hardcodet.net/taskbar"
+        mc:Ignorable="d"
+        Title="ENET" Height="700" Width="950"
+        WindowStartupLocation="CenterScreen"
+        Closing="Window_Closing">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+        <local:NullToBoolConverter x:Key="NullToBoolConverter"/>
+        <local:RunningStatusColorConverter x:Key="RunningStatusColorConverter"/>
+
+        <!-- 代理类型列表 -->
+        <x:Array x:Key="ProxyTypes" Type="sys:String"
+                 xmlns:sys="clr-namespace:System;assembly=mscorlib">
+            <sys:String>tcp</sys:String>
+            <sys:String>udp</sys:String>
+            <sys:String>http</sys:String>
+            <sys:String>https</sys:String>
+            <sys:String>stcp</sys:String>
+        </x:Array>
+
+        <!-- 全局按钮样式 -->
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="MinWidth" Value="60"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="3">
+                            <Grid>
+                                <ContentPresenter x:Name="contentPresenter"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  TextElement.Foreground="{TemplateBinding Foreground}"
+                                                  Margin="{TemplateBinding Padding}"/>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 按钮内部StackPanel样式 -->
+        <Style TargetType="StackPanel" x:Key="ButtonContentStyle">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- 按钮内部TextBlock样式 -->
+        <Style TargetType="TextBlock" x:Key="ButtonTextStyle">
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- 工具栏按钮样式 -->
+        <Style x:Key="ToolbarButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#F5F5F5"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+        </Style>
+
+        <!-- 顶部按钮样式 -->
+        <Style x:Key="TopButtonStyle" TargetType="Button">
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="Width" Value="70"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="200"/>
+        </Grid.RowDefinitions>
+
+        <!-- 顶部工具栏 -->
+        <Border Grid.Row="0" Margin="0,0,0,10" Background="#F0F0F0" BorderBrush="#CCCCCC" BorderThickness="0,0,0,1" Padding="5">
+            <StackPanel Orientation="Horizontal">
+                <!-- 操作按钮组 -->
+                <Border Background="#E6F3FF" CornerRadius="4" BorderBrush="#AACCEE" BorderThickness="1" Padding="5,2">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Command="{Binding StartCommand}" ToolTip="启动" Background="#4CAF50" Foreground="White" BorderThickness="0" Width="70">
+                            <Grid>
+                                <TextBlock Text="启动" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Button>
+                        <Button Command="{Binding StopCommand}" ToolTip="停止" Background="#F44336" Foreground="White" BorderThickness="0" Width="70" Margin="5,2,2,2">
+                            <Grid>
+                                <TextBlock Text="停止" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <Separator Margin="10,0" Background="#CCCCCC" Width="1" Height="30"/>
+
+                <!-- 配置按钮组 -->
+                <Border Background="#F5F5F5" CornerRadius="4" BorderBrush="#DDDDDD" BorderThickness="1" Padding="5,2" Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Command="{Binding NewConfigCommand}" ToolTip="新建配置" Width="70">
+                            <Grid>
+                                <TextBlock Text="新建" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Button>
+                        <Button Command="{Binding SaveConfigCommand}" ToolTip="保存配置" Width="70" Margin="5,2,5,2">
+                            <Grid>
+                                <TextBlock Text="保存" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Button>
+                        <Button Command="{Binding DeleteConfigCommand}" ToolTip="删除配置" Width="70" Margin="5,2,2,2">
+                            <Grid>
+                                <TextBlock Text="删除" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- 状态显示 -->
+                <Border Background="#EFEFEF" CornerRadius="4" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10,5" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="状态:" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" FontWeight="Bold" Margin="5,0,0,0" Foreground="{Binding IsRunning, Converter={StaticResource RunningStatusColorConverter}}"/>
+                        <Separator Margin="10,0" Background="#CCCCCC" Width="1" Height="20"/>
+                        <CheckBox Content="开机自启动" IsChecked="{Binding AutoStartWithWindows}" VerticalAlignment="Center" Margin="5,0,15,0"/>
+                        <CheckBox Content="注册为系统服务" IsChecked="{Binding IsRegisteredAsService}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- 主内容区 -->
+        <Grid Grid.Row="1" MinHeight="300">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- 上半部分：基本配置和配置列表并排 -->
+            <Grid Grid.Row="0" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="250"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 左侧基本配置 -->
+                <GroupBox Header="基本配置" Grid.Column="0" Margin="0,0,10,0" IsEnabled="{Binding CanEditProxy}">
+                    <Grid Margin="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- 第一行 -->
+                        <Label Content="配置名称:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,5,5"/>
+                        <TextBox Text="{Binding SelectedConfig.Name}" Grid.Row="0" Grid.Column="1" Margin="5,5,10,5" Height="25"/>
+
+                        <Label Content="服务器地址:" Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Margin="10,5,5,5"/>
+                        <TextBox Text="{Binding SelectedConfig.ServerAddress}" Grid.Row="0" Grid.Column="3" Margin="5,5,0,5" Height="25"/>
+
+                        <!-- 第二行 -->
+                        <Label Content="frpc路径:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,5,5"/>
+                        <Grid Grid.Row="1" Grid.Column="1" Margin="5,5,10,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Text="{Binding SelectedConfig.FrpcPath}" Grid.Column="0" Height="25"/>
+                            <Button Grid.Column="1" Command="{Binding BrowseFrpcCommand}" Margin="5,0,0,0" Width="60" Height="25">
+                                <TextBlock Text="浏览..." HorizontalAlignment="Center"/>
+                            </Button>
+                        </Grid>
+
+                        <Label Content="服务器端口:" Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Margin="10,5,5,5"/>
+                        <TextBox Text="{Binding SelectedConfig.ServerPort}" Grid.Row="1" Grid.Column="3" Margin="5,5,0,5" Height="25"/>
+
+                        <!-- 第三行 -->
+                        <Label Content="认证令牌:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,5,5"/>
+                        <PasswordBox x:Name="TokenPasswordBox" Grid.Row="2" Grid.Column="1" Margin="5,5,10,5" Height="25" PasswordChanged="TokenPasswordBox_PasswordChanged"/>
+
+                        <Label Content="启用TLS:" Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Margin="10,5,5,5"/>
+                        <CheckBox IsChecked="{Binding SelectedConfig.EnableTls}" Grid.Row="2" Grid.Column="3" VerticalAlignment="Center" Margin="5,5,0,5"/>
+                    </Grid>
+                </GroupBox>
+
+                <!-- 右侧配置列表 -->
+                <GroupBox Header="配置列表" Grid.Column="1">
+                    <ListBox ItemsSource="{Binding ConfigNames}" Margin="5"
+                             SelectedItem="{Binding SelectedConfigName, Mode=TwoWay}"
+                             SelectionChanged="ConfigListBox_SelectionChanged"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             Height="140"/>
+                </GroupBox>
+            </Grid>
+
+            <!-- 下半部分：代理配置和代理列表 -->
+            <Grid Grid.Row="1" IsEnabled="{Binding CanEditProxy}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- 代理配置 -->
+                <GroupBox Header="代理配置" Grid.Row="0" Margin="0,0,0,10">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Button Grid.Row="0" Command="{Binding AddProxyCommand}"
+                                Background="#4CAF50" Foreground="White" BorderThickness="0"
+                                Padding="10,5" Margin="0,5,0,5" HorizontalAlignment="Left" Width="100">
+                            <DockPanel HorizontalAlignment="Center" LastChildFill="False">
+                                <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" Margin="0,0,8,0" DockPanel.Dock="Left"/>
+                                <TextBlock Text="添加代理" FontWeight="SemiBold" VerticalAlignment="Center" DockPanel.Dock="Right"/>
+                            </DockPanel>
+                        </Button>
+                    </Grid>
+                </GroupBox>
+
+                <!-- 代理列表 -->
+                <DataGrid ItemsSource="{Binding SelectedConfig.ProxiesCollection}" AutoGenerateColumns="False"
+                          Grid.Row="1" CanUserAddRows="False" CanUserDeleteRows="False"
+                          BorderThickness="1" BorderBrush="#DDDDDD" Background="White"
+                          RowBackground="White" AlternatingRowBackground="#F5F5F5"
+                          GridLinesVisibility="All" HeadersVisibility="Column"
+                          RowHeaderWidth="0" IsReadOnly="False"
+                          Height="150" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+                    <DataGrid.Resources>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#E0E0E0"/>
+                            <Setter Property="Padding" Value="10,5"/>
+                            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+                            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </Style>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Padding" Value="8,4"/>
+                            <Setter Property="BorderBrush" Value="#DDDDDD"/>
+                            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="DataGridCell">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter Margin="{TemplateBinding Padding}"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </DataGrid.Resources>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="名称" Binding="{Binding Name}" Width="100"/>
+                        <DataGridComboBoxColumn Header="类型" SelectedItemBinding="{Binding Type}" Width="80">
+                            <DataGridComboBoxColumn.ElementStyle>
+                                <Style TargetType="ComboBox">
+                                    <Setter Property="ItemsSource" Value="{Binding Source={StaticResource ProxyTypes}}"/>
+                                </Style>
+                            </DataGridComboBoxColumn.ElementStyle>
+                            <DataGridComboBoxColumn.EditingElementStyle>
+                                <Style TargetType="ComboBox">
+                                    <Setter Property="ItemsSource" Value="{Binding Source={StaticResource ProxyTypes}}"/>
+                                </Style>
+                            </DataGridComboBoxColumn.EditingElementStyle>
+                        </DataGridComboBoxColumn>
+                        <DataGridTextColumn Header="本地IP" Binding="{Binding LocalIp}" Width="100"/>
+                        <DataGridTextColumn Header="本地端口" Binding="{Binding LocalPort}" Width="80"/>
+                        <DataGridTextColumn Header="远程端口" Binding="{Binding RemotePort}" Width="80"/>
+                        <DataGridTextColumn Header="自定义域名" Binding="{Binding CustomDomains}" Width="*"/>
+                        <DataGridTemplateColumn Width="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Command="{Binding DataContext.RemoveProxyCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding}"
+                                            Margin="2" Padding="5,2"
+                                            Background="#F44336" Foreground="White" BorderThickness="0" Width="60">
+                                        <TextBlock Text="删除" FontWeight="SemiBold" HorizontalAlignment="Center" TextAlignment="Center"/>
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Grid>
+
+        <!-- 占位符，用于分隔主内容区和日志区域 -->
+        <Rectangle Grid.Row="2" Height="5" Fill="Transparent"/>
+
+        <!-- 日志区域 -->
+        <GroupBox Header="日志" Grid.Row="3" Margin="0,10,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- 日志区域内部不需要GridSplitter -->
+
+                <Border Grid.Row="0" BorderThickness="1" BorderBrush="#DDDDDD" Background="#FAFAFA">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <TextBlock Text="{Binding LogContent}"
+                                 FontFamily="Consolas" FontSize="12" Padding="5" Margin="0"
+                                 TextWrapping="Wrap" LineStackingStrategy="BlockLineHeight" LineHeight="20"/>
+                    </ScrollViewer>
+                </Border>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                    <Button Command="{Binding ClearLogCommand}" Padding="10,5" Background="#607D8B" Foreground="White" BorderThickness="0" Width="100">
+                        <DockPanel HorizontalAlignment="Center" LastChildFill="False">
+                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" Margin="0,0,5,0" DockPanel.Dock="Left"/>
+                            <TextBlock Text="清除日志" FontWeight="SemiBold" VerticalAlignment="Center" DockPanel.Dock="Right"/>
+                        </DockPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+
+        <!-- 系统托盘图标 -->
+        <tb:TaskbarIcon x:Name="TrayIcon"
+                        IconSource="/icon.ico"
+                        ToolTipText="ENET"
+                        TrayLeftMouseDown="TrayIcon_TrayLeftMouseDown"
+                        TrayMouseDoubleClick="TrayIcon_TrayMouseDoubleClick">
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="显示窗口" Click="ShowWindow_Click"/>
+                    <Separator/>
+                    <MenuItem Header="启动" Command="{Binding StartCommand}"/>
+                    <MenuItem Header="停止" Command="{Binding StopCommand}"/>
+                    <Separator/>
+                    <MenuItem Header="退出" Click="Exit_Click"/>
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
+    </Grid>
+</Window>
