@@ -1,0 +1,103 @@
+# Visual Studio files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Visual Studio cache files
+*.[Cc]ache
+!?*.[Cc]ache/
+
+# Others
+ClientBin/
+~$*
+*~
+*.dbmdl
+*.dbproj.schemaview
+*.jfm
+*.pfx
+*.publishsettings
+orleans.codegen.cs
+
+# Including strong name files can present a security risk
+*.snk
+
+# Build output
+build/output/
+publish/
+
+# Generated files and binaries
+FrpcGui-Release/
+*.exe
+*.dll
+*.pdb
+*.zip
+*.msi
+*.msix
+*.appx
+*.appxbundle
+*.msixbundle
+*.iso
+*.rar
+*.7z
+*.tar
+*.gz
+*.vsix
+publish/
+bin/
+obj/
+
+# Backup & report files from converting an old project file
+_UpgradeReport_Files/
+Backup*/
+UpgradeLog*.XML
+UpgradeLog*.htm
+ServiceFabricBackup/
+*.rptproj.bak
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~.nib
+local.properties
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Old project files
+FrpcGui/
+TestApp/
+Models/
+Services/
+ViewModels/
+Views/
+Resources/
