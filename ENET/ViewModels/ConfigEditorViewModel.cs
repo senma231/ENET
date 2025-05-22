@@ -7,7 +7,7 @@ namespace ENET.ViewModels
     public class ConfigEditorViewModel : ViewModelBase
     {
         private FrpcConfig _config;
-        private ProxyConfig _selectedProxy;
+        private ProxyConfig? _selectedProxy;
 
         public ConfigEditorViewModel(FrpcConfig config)
         {
@@ -30,7 +30,7 @@ namespace ENET.ViewModels
         /// <summary>
         /// 选中的代理配置
         /// </summary>
-        public ProxyConfig SelectedProxy
+        public ProxyConfig? SelectedProxy
         {
             get => _selectedProxy;
             set
@@ -70,7 +70,7 @@ namespace ENET.ViewModels
             if (SelectedProxy != null)
             {
                 Config.Proxies.Remove(SelectedProxy);
-                SelectedProxy = null;
+                SelectedProxy = null!;
                 OnPropertyChanged(nameof(Config));
             }
         }

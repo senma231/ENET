@@ -40,7 +40,7 @@ namespace ENET.Models
         /// <summary>
         /// 认证令牌
         /// </summary>
-        public string Token { get; set; } = "";
+        public string? Token { get; set; } = "";
 
         /// <summary>
         /// 是否启用TLS

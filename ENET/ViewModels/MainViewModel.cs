@@ -21,11 +21,11 @@ namespace ENET.ViewModels
             base.OnPropertyChanged(propertyName);
         }
         private readonly FrpcService _frpcService;
-        private FrpcConfig _selectedConfig;
+        private FrpcConfig? _selectedConfig;
         private string _logContent = "";
         private bool _isRunning = false;
         private string _statusText = "已停止";
-        private string _selectedConfigName;
+        private string? _selectedConfigName;
 
         public MainViewModel()
         {
@@ -48,7 +48,7 @@ namespace ENET.ViewModels
             DeleteConfigCommand = new RelayCommand(DeleteConfig, () => SelectedConfig != null);
             BrowseFrpcCommand = new RelayCommand(BrowseFrpcExecutable);
             AddProxyCommand = new RelayCommand(AddProxy, () => SelectedConfig != null);
-            RemoveProxyCommand = new RelayCommand<ProxyConfig>(RemoveProxy, (proxy) => SelectedConfig != null && proxy != null);
+            RemoveProxyCommand = new RelayCommand<ProxyConfig?>(RemoveProxy, (proxy) => SelectedConfig != null && proxy != null);
             ClearLogCommand = new RelayCommand(ClearLog);
             MinimizeToTrayCommand = new RelayCommand(MinimizeToTray);
             ExitCommand = new RelayCommand(Exit);
@@ -80,7 +80,7 @@ namespace ENET.ViewModels
         /// <summary>
         /// 当前选中的配置名称
         /// </summary>
-        public string SelectedConfigName
+        public string? SelectedConfigName
         {
             get => _selectedConfigName;
             set => SetProperty(ref _selectedConfigName, value);
@@ -89,7 +89,7 @@ namespace ENET.ViewModels
         /// <summary>
         /// 当前选中的配置
         /// </summary>
-        public FrpcConfig SelectedConfig
+        public FrpcConfig? SelectedConfig
         {
             get => _selectedConfig;
             set
@@ -318,13 +318,13 @@ namespace ENET.ViewModels
         /// </summary>
         private void StartFrpc()
         {
-            if (string.IsNullOrEmpty(SelectedConfig.FrpcPath))
+            if (SelectedConfig == null || string.IsNullOrEmpty(SelectedConfig.FrpcPath))
             {
                 MessageBox.Show("请先选择frpc可执行文件路径", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
-            if (!File.Exists(SelectedConfig.FrpcPath))
+            if (SelectedConfig == null || !File.Exists(SelectedConfig.FrpcPath))
             {
                 MessageBox.Show("frpc可执行文件不存在，请重新选择", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
@@ -358,6 +358,9 @@ namespace ENET.ViewModels
         /// </summary>
         private void SaveConfig()
         {
+            if (SelectedConfig == null)
+                return;
+
             _frpcService.SaveConfig(SelectedConfig);
             LoadConfigList();
 
@@ -373,6 +376,9 @@ namespace ENET.ViewModels
         /// </summary>
         private void DeleteConfig()
         {
+            if (SelectedConfig == null)
+                return;
+
             if (MessageBox.Show($"确定要删除配置 \"{SelectedConfig.Name}\" 吗？", "确认删除",
                     MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
@@ -401,7 +407,7 @@ namespace ENET.ViewModels
                 Title = "选择frpc可执行文件"
             };
 
-            if (dialog.ShowDialog() == true)
+            if (dialog.ShowDialog() == true && SelectedConfig != null)
             {
                 SelectedConfig.FrpcPath = dialog.FileName;
                 OnPropertyChanged(nameof(SelectedConfig));
@@ -438,7 +444,7 @@ namespace ENET.ViewModels
         /// <summary>
         /// 删除代理配置
         /// </summary>
-        private void RemoveProxy(ProxyConfig proxy)
+        private void RemoveProxy(ProxyConfig? proxy)
         {
             Console.WriteLine($"尝试删除代理: {proxy?.Name}");
 
@@ -585,15 +591,8 @@ namespace ENET.ViewModels
                     return processPath;
                 }
 
-                // 回退到使用Assembly.Location
-                string assemblyLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
-                if (!string.IsNullOrEmpty(assemblyLocation))
-                {
-                    Console.WriteLine($"使用Assembly.Location获取路径: {assemblyLocation}");
-                    return assemblyLocation;
-                }
-
-                // 尝试使用AppContext.BaseDirectory
+                // 使用AppContext.BaseDirectory代替Assembly.Location
+                // 这样可以避免在单文件应用中Assembly.Location返回空字符串的问题
                 string baseDirectory = AppContext.BaseDirectory;
                 string exePath = Path.Combine(baseDirectory, "ENET.exe");
                 if (File.Exists(exePath))

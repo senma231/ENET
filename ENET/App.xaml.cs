@@ -110,7 +110,7 @@ namespace ENET
         {
             try
             {
-                Exception ex = e.ExceptionObject as Exception;
+                Exception? ex = e.ExceptionObject as Exception;
 
                 // 记录异常
                 string appDataPath = Path.Combine(

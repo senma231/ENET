@@ -13,7 +13,7 @@ namespace ENET
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly MainViewModel _viewModel;
+        private readonly MainViewModel _viewModel = null!;
         private bool _isExiting = false;
 
         public MainWindow()
@@ -56,7 +56,7 @@ namespace ENET
 
                 // 注册窗口状态变更事件
                 Console.WriteLine("正在注册窗口事件...");
-                StateChanged += MainWindow_StateChanged;
+                StateChanged += (s, e) => MainWindow_StateChanged(s!, e);
                 Console.WriteLine("窗口事件注册完成");
 
                 // 记录窗口初始化完成
@@ -140,7 +140,7 @@ namespace ENET
         /// <summary>
         /// 窗口状态变更事件处理
         /// </summary>
-        private void MainWindow_StateChanged(object? sender, EventArgs e)
+        private void MainWindow_StateChanged(object sender, EventArgs e)
         {
             // 当窗口最小化时，隐藏窗口
             if (WindowState == WindowState.Minimized)
@@ -162,7 +162,7 @@ namespace ENET
                 // 更新认证令牌密码框
                 if (_viewModel.SelectedConfig != null)
                 {
-                    TokenPasswordBox.Password = _viewModel.SelectedConfig.Token;
+                    TokenPasswordBox.Password = _viewModel.SelectedConfig.Token ?? string.Empty;
                 }
             }
         }

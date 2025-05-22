@@ -47,8 +47,9 @@ namespace ENET.Services
                     Console.WriteLine($"警告: 无法提取嵌入的frpc.exe: {ex.Message}");
 
                     // 尝试在应用程序目录中查找frpc.exe
+                    // 使用AppContext.BaseDirectory代替Assembly.Location
                     string appDirFrpcPath = Path.Combine(
-                        Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "",
+                        AppContext.BaseDirectory,
                         "frpc.exe");
 
                     if (File.Exists(appDirFrpcPath))

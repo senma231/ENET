@@ -97,8 +97,9 @@ Thumbs.db
 FrpcGui/
 FrpcGui-Release/
 TestApp/
-Models/
-Services/
-ViewModels/
-Views/
-Resources/
+# 移除以下目录的排除规则，因为它们包含我们需要提交的代码
+# Models/
+# Services/
+# ViewModels/
+# Views/
+# Resources/
