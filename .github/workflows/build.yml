@@ -1,6 +1,11 @@
 # ENET项目的GitHub Actions工作流
+# 用于自动构建、打包和发布ENET客户端
 name: Build ENET
 
+# 触发条件：
+# 1. 推送到master或main分支
+# 2. 创建以v开头的标签（如v1.0.0）
+# 3. 手动触发
 on:
   push:
     branches: [ master, main ]
@@ -24,55 +29,60 @@ on:
           - beta
           - alpha
 
+# 环境变量
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT_PATH: 'ENET/ENET.csproj'
+  PUBLISH_DIR: './publish'
+  PORTABLE_DIR: './portable/ENET'
+
+# 工作流任务
 jobs:
+  # 构建任务
   build:
     name: Build and Package
-    runs-on: windows-latest
-    
+    runs-on: windows-2019  # 使用稳定的Windows 2019运行器
+
     steps:
+    # 步骤1: 检出代码
     - name: Checkout code
-      uses: actions/checkout@v3
-    
+      uses: actions/checkout@v2  # 使用稳定的v2版本
+
+    # 步骤2: 设置.NET环境
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v2  # 使用稳定的v2版本
       with:
-        dotnet-version: 8.0.x
-    
-    - name: Display environment info
-      shell: pwsh
-      run: |
-        dotnet --info
-        
-        Write-Host "Current directory structure:"
-        Get-ChildItem -Path . -Recurse -Depth 2 | Select-Object FullName
-        
-        Write-Host "Solution and project files:"
-        Get-ChildItem -Path . -Recurse -Include *.sln,*.csproj | Select-Object FullName
-    
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    # 步骤3: 显示.NET信息
+    - name: Display .NET information
+      run: dotnet --info
+
+    # 步骤4: 修复命名空间问题
     - name: Fix namespace issues
       shell: pwsh
       run: |
         # 查找所有的.cs文件
         $csFiles = Get-ChildItem -Path . -Recurse -Include *.cs | Where-Object { $_.FullName -notlike "*\obj\*" -and $_.FullName -notlike "*\bin\*" }
-        
+
         foreach ($file in $csFiles) {
             Write-Host "Checking file: $($file.FullName)"
             $content = Get-Content -Path $file.FullName -Raw
-            
+
             # 替换命名空间
             if ($content -match "namespace FrpcGui") {
                 Write-Host "  - Replacing namespace in $($file.Name)"
                 $content = $content -replace "namespace FrpcGui", "namespace ENET"
                 Set-Content -Path $file.FullName -Value $content
             }
-            
+
             # 替换错误的引用
             if ($content -match "ENET\.Windows") {
                 Write-Host "  - Fixing Windows namespace reference in $($file.Name)"
                 $content = $content -replace "ENET\.Windows", "System.Windows"
                 Set-Content -Path $file.FullName -Value $content
             }
-            
+
             # 替换FrpcGui的引用
             if ($content -match "using FrpcGui") {
                 Write-Host "  - Replacing using statements in $($file.Name)"
@@ -80,14 +90,14 @@ jobs:
                 Set-Content -Path $file.FullName -Value $content
             }
         }
-        
+
         # 查找所有的.xaml文件
         $xamlFiles = Get-ChildItem -Path . -Recurse -Include *.xaml | Where-Object { $_.FullName -notlike "*\obj\*" -and $_.FullName -notlike "*\bin\*" }
-        
+
         foreach ($file in $xamlFiles) {
             Write-Host "Checking XAML file: $($file.FullName)"
             $content = Get-Content -Path $file.FullName -Raw
-            
+
             # 替换XAML中的命名空间引用
             if ($content -match "clr-namespace:FrpcGui") {
                 Write-Host "  - Replacing namespace in XAML $($file.Name)"
@@ -95,69 +105,87 @@ jobs:
                 Set-Content -Path $file.FullName -Value $content
             }
         }
-    
+
+    # 步骤5: 还原NuGet包
     - name: Restore dependencies
       run: dotnet restore
-    
+
+    # 步骤6: 构建项目
     - name: Build project
       run: dotnet build --configuration Release --no-restore
-    
+
+    # 步骤7: 运行测试（如果有）
+    - name: Run tests
+      run: dotnet test --configuration Release --no-build --verbosity normal
+      continue-on-error: true  # 即使测试失败也继续执行
+
+    # 步骤8: 发布项目（生成可执行文件）
     - name: Publish project
       run: |
-        dotnet publish ENET/ENET.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o "./publish"
-    
-    - name: Check publish directory
-      shell: pwsh
-      run: |
-        if (Test-Path "./publish") {
-            Write-Host "Publish directory contents:"
-            Get-ChildItem -Path "./publish" -Recurse | Select-Object FullName
-        } else {
-            Write-Host "Publish directory not found"
-        }
-    
+        dotnet publish ${{ env.PROJECT_PATH }} -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ${{ env.PUBLISH_DIR }}
+        # 显示发布目录内容
+        dir ${{ env.PUBLISH_DIR }}
+
+    # 步骤9: 创建便携版
     - name: Create portable version
       shell: pwsh
       run: |
         # 创建便携版目录
-        $portableDir = "./portable/ENET"
-        New-Item -Path $portableDir -ItemType Directory -Force
-        
+        New-Item -Path ${{ env.PORTABLE_DIR }} -ItemType Directory -Force
+
         # 复制发布文件到便携版目录
-        if (Test-Path "./publish/ENET.exe") {
-            Copy-Item -Path "./publish/ENET.exe" -Destination "$portableDir/"
-            Copy-Item -Path "./publish/*.dll" -Destination "$portableDir/" -ErrorAction SilentlyContinue
-            Copy-Item -Path "./LICENSE" -Destination "$portableDir/" -ErrorAction SilentlyContinue
-            Copy-Item -Path "./README.md" -Destination "$portableDir/" -ErrorAction SilentlyContinue
-            
-            # 创建ZIP压缩包
-            Compress-Archive -Path "$portableDir/*" -DestinationPath "./ENET_Portable.zip" -Force
-            
-            Write-Host "Portable directory contents:"
-            Get-ChildItem -Path $portableDir -Recurse | Select-Object FullName
-            
-            Write-Host "ZIP file created:"
-            Get-ChildItem -Path . -Include *.zip | Select-Object FullName
-        } else {
-            Write-Host "ENET.exe not found in publish directory"
-        }
-    
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+        Copy-Item -Path "${{ env.PUBLISH_DIR }}/*" -Destination ${{ env.PORTABLE_DIR }} -Recurse
+
+        # 复制许可证和说明文件
+        Copy-Item -Path "LICENSE" -Destination "${{ env.PORTABLE_DIR }}/LICENSE" -ErrorAction SilentlyContinue
+        Copy-Item -Path "README.md" -Destination "${{ env.PORTABLE_DIR }}/README.md" -ErrorAction SilentlyContinue
+
+        # 显示便携版目录内容
+        dir ${{ env.PORTABLE_DIR }}
+
+    # 步骤10: 创建ZIP压缩包
+    - name: Create ZIP archive
+      shell: pwsh
+      run: |
+        Compress-Archive -Path "${{ env.PORTABLE_DIR }}/*" -DestinationPath "./ENET_Portable.zip" -Force
+        # 显示ZIP文件信息
+        dir *.zip
+
+    # 步骤11: 上传构建产物（不使用upload-artifact动作）
+    - name: Prepare artifacts for release
+      shell: pwsh
+      run: |
+        # 创建发布目录
+        New-Item -Path "./release" -ItemType Directory -Force
+
+        # 复制构建产物到发布目录
+        Copy-Item -Path "${{ env.PUBLISH_DIR }}/ENET.exe" -Destination "./release/ENET.exe" -ErrorAction SilentlyContinue
+        Copy-Item -Path "./ENET_Portable.zip" -Destination "./release/ENET_Portable.zip" -ErrorAction SilentlyContinue
+
+        # 显示发布目录内容
+        dir ./release
+
+    # 步骤12: 从标签创建发布
+    - name: Create release from tag
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: ncipollo/release-action@v1  # 使用替代的发布动作
       with:
-        name: ENET-build
-        path: |
-          ./publish/ENET.exe
-          ./ENET_Portable.zip
-    
-    - name: Create release
-      if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
-      uses: ncipollo/release-action@v1
-      with:
-        artifacts: "./publish/ENET.exe,./ENET_Portable.zip"
+        artifacts: "./release/ENET.exe,./release/ENET_Portable.zip"
         token: ${{ secrets.GITHUB_TOKEN }}
         draft: false
+        prerelease: false
+        name: "Release ${{ github.ref_name }}"
+        body: "ENET客户端 ${{ github.ref_name }} 发布版本"
+
+    # 步骤13: 从手动触发创建发布
+    - name: Create release from manual trigger
+      if: github.event_name == 'workflow_dispatch'
+      uses: ncipollo/release-action@v1  # 使用替代的发布动作
+      with:
+        artifacts: "./release/ENET.exe,./release/ENET_Portable.zip"
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: "v${{ github.event.inputs.version }}"
+        name: "Release v${{ github.event.inputs.version }}"
+        body: "ENET客户端 v${{ github.event.inputs.version }} ${{ github.event.inputs.release_type }}版本"
+        draft: false
         prerelease: ${{ github.event.inputs.release_type != 'release' }}
-        name: ${{ github.event_name == 'workflow_dispatch' && format('Release v{0}', github.event.inputs.version) || format('Release {0}', github.ref_name) }}
-        body: ${{ github.event_name == 'workflow_dispatch' && format('ENET客户端 v{0} {1}版本', github.event.inputs.version, github.event.inputs.release_type) || format('ENET客户端 {0} 发布版本', github.ref_name) }}
-        tag: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', github.event.inputs.version) || github.ref_name }}
