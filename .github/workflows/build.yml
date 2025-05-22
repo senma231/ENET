@@ -7,43 +7,58 @@ on:
       - 'v*'
   pull_request:
     branches: [ master, main ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号 (例如: 1.0.1)'
+        required: true
+        default: '1.0.0'
+      release_type:
+        description: '发布类型'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - beta
+          - alpha
 
 jobs:
   build:
     runs-on: windows-latest
-
+    
     steps:
     - uses: actions/checkout@v3
-
+    
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 8.0.x
-
+    
     - name: Restore dependencies
       run: dotnet restore
-
+    
     - name: Build
       run: dotnet build --no-restore --configuration Release
-
+    
     - name: Test
       run: dotnet test --no-build --verbosity normal --configuration Release
-
+    
     - name: Publish
       run: |
         dotnet publish ENET/ENET.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish
-
+    
     - name: Create Portable Version
       run: |
         mkdir -p ./portable/ENET
         cp -r ./publish/* ./portable/ENET/
         cp LICENSE ./portable/ENET/
         cp README.md ./portable/ENET/
-
+    
     - name: Create ZIP Archive
       run: |
         Compress-Archive -Path ./portable/ENET/* -DestinationPath ./ENET_Portable.zip
-
+    
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -51,8 +66,8 @@ jobs:
         path: |
           ./publish/ENET.exe
           ./ENET_Portable.zip
-
-    - name: Create Release
+    
+    - name: Create Release from Tag
       if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v1
       with:
@@ -61,5 +76,19 @@ jobs:
           ./ENET_Portable.zip
         draft: false
         prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Create Release from Manual Trigger
+      if: github.event_name == 'workflow_dispatch'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ github.event.inputs.version }}
+        name: Release v${{ github.event.inputs.version }}
+        files: |
+          ./publish/ENET.exe
+          ./ENET_Portable.zip
+        draft: false
+        prerelease: ${{ github.event.inputs.release_type != 'release' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
