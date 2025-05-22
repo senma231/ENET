@@ -32,7 +32,8 @@ on:
 # 环境变量
 env:
   DOTNET_VERSION: '8.0.x'
-  PROJECT_PATH: 'ENET/ENET.csproj'
+  PROJECT_PATH: './ENET/ENET.csproj'  # 明确指定项目文件的相对路径
+  SOLUTION_PATH: './ENET.sln'         # 明确指定解决方案文件的相对路径
   PUBLISH_DIR: './publish'
   PORTABLE_DIR: './portable/ENET'
 
@@ -58,27 +59,36 @@ jobs:
     - name: Display .NET information
       run: dotnet --info
     
-    # 步骤4: 还原NuGet包
-    - name: Restore dependencies
-      run: dotnet restore
-      
-    # 步骤5: 构建项目
-    - name: Build project
-      run: dotnet build --configuration Release --no-restore
+    # 步骤4: 列出目录内容，帮助调试
+    - name: List directory contents
+      shell: pwsh
+      run: |
+        Write-Host "Current directory:"
+        Get-ChildItem -Path .
+        Write-Host "ENET directory:"
+        Get-ChildItem -Path ./ENET -ErrorAction SilentlyContinue
     
-    # 步骤6: 运行测试（如果有）
+    # 步骤5: 还原NuGet包
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
+      
+    # 步骤6: 构建项目
+    - name: Build project
+      run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+    
+    # 步骤7: 运行测试（如果有）
     - name: Run tests
-      run: dotnet test --configuration Release --no-build --verbosity normal
+      run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --no-build --verbosity normal
       continue-on-error: true  # 即使测试失败也继续执行
     
-    # 步骤7: 发布项目（生成可执行文件）
+    # 步骤8: 发布项目（生成可执行文件）
     - name: Publish project
       run: |
         dotnet publish ${{ env.PROJECT_PATH }} -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ${{ env.PUBLISH_DIR }}
         # 显示发布目录内容
         dir ${{ env.PUBLISH_DIR }}
     
-    # 步骤8: 创建便携版
+    # 步骤9: 创建便携版
     - name: Create portable version
       shell: pwsh
       run: |
@@ -95,7 +105,7 @@ jobs:
         # 显示便携版目录内容
         dir ${{ env.PORTABLE_DIR }}
     
-    # 步骤9: 创建ZIP压缩包
+    # 步骤10: 创建ZIP压缩包
     - name: Create ZIP archive
       shell: pwsh
       run: |
@@ -103,7 +113,7 @@ jobs:
         # 显示ZIP文件信息
         dir *.zip
     
-    # 步骤10: 上传构建产物（不使用upload-artifact动作）
+    # 步骤11: 上传构建产物（不使用upload-artifact动作）
     - name: Prepare artifacts for release
       shell: pwsh
       run: |
@@ -117,7 +127,7 @@ jobs:
         # 显示发布目录内容
         dir ./release
     
-    # 步骤11: 从标签创建发布
+    # 步骤12: 从标签创建发布
     - name: Create release from tag
       if: startsWith(github.ref, 'refs/tags/v')
       uses: ncipollo/release-action@v1  # 使用替代的发布动作
@@ -129,7 +139,7 @@ jobs:
         name: "Release ${{ github.ref_name }}"
         body: "ENET客户端 ${{ github.ref_name }} 发布版本"
     
-    # 步骤12: 从手动触发创建发布
+    # 步骤13: 从手动触发创建发布
     - name: Create release from manual trigger
       if: github.event_name == 'workflow_dispatch'
       uses: ncipollo/release-action@v1  # 使用替代的发布动作
