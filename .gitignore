@@ -92,3 +92,12 @@ local.properties
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Old project files
+FrpcGui/
+TestApp/
+Models/
+Services/
+ViewModels/
+Views/
+Resources/
