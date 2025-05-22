@@ -95,6 +95,7 @@ Thumbs.db
 
 # Old project files
 FrpcGui/
+FrpcGui-Release/
 TestApp/
 Models/
 Services/
