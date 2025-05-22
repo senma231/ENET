@@ -48,10 +48,26 @@ orleans.codegen.cs
 build/output/
 publish/
 
-# Large files
+# Generated files and binaries
 FrpcGui-Release/
 *.exe
-!build/*.exe
+*.dll
+*.pdb
+*.zip
+*.msi
+*.msix
+*.appx
+*.appxbundle
+*.msixbundle
+*.iso
+*.rar
+*.7z
+*.tar
+*.gz
+*.vsix
+publish/
+bin/
+obj/
 
 # Backup & report files from converting an old project file
 _UpgradeReport_Files/
