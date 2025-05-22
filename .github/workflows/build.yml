@@ -60,7 +60,7 @@ jobs:
         Compress-Archive -Path ./portable/ENET/* -DestinationPath ./ENET_Portable.zip
     
     - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v2
       with:
         name: ENET-build
         path: |
