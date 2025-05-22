@@ -48,6 +48,11 @@ orleans.codegen.cs
 build/output/
 publish/
 
+# Large files
+FrpcGui-Release/
+*.exe
+!build/*.exe
+
 # Backup & report files from converting an old project file
 _UpgradeReport_Files/
 Backup*/
