@@ -108,15 +108,15 @@ jobs:
 
     # 步骤5: 还原NuGet包
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore ${{ env.PROJECT_PATH }}
 
     # 步骤6: 构建项目
     - name: Build project
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build ${{ env.PROJECT_PATH }} --configuration Release --no-restore
 
     # 步骤7: 运行测试（如果有）
     - name: Run tests
-      run: dotnet test --configuration Release --no-build --verbosity normal
+      run: dotnet test ${{ env.PROJECT_PATH }} --configuration Release --no-build --verbosity normal
       continue-on-error: true  # 即使测试失败也继续执行
 
     # 步骤8: 发布项目（生成可执行文件）
