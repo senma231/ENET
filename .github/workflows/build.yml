@@ -131,12 +131,27 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       uses: ncipollo/release-action@v1
       with:
-        artifacts: "./release/ENET.exe,./release/ENET_Portable.zip"
+        artifacts: |
+          ./release/ENET.exe
+          ./release/ENET_Portable.zip
         token: ${{ secrets.GITHUB_TOKEN }}
         draft: false
         prerelease: false
         name: "Release ${{ github.ref_name }}"
-        body: "ENET客户端 ${{ github.ref_name }} 发布版本"
+        body: |
+          ENET客户端 ${{ github.ref_name }} 发布版本
+
+          ## 功能特性
+          - 基于.NET 8.0开发的FRP图形客户端
+          - 支持多配置管理和可视化配置
+          - 支持系统托盘和开机自启
+          - 便携版无需安装，包含完整运行时
+
+          ## 下载说明
+          - ENET.exe: 单文件可执行程序
+          - ENET_Portable.zip: 便携版压缩包
+        allowUpdates: true
+        makeLatest: true
 
     # 步骤13: 从手动触发创建发布
     - name: Create release from manual trigger
