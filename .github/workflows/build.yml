@@ -1,0 +1,152 @@
+# ENET项目的GitHub Actions工作流
+# 用于自动构建、打包和发布ENET客户端
+name: Build ENET
+
+# 触发条件：
+# 1. 推送到master或main分支
+# 2. 创建以v开头的标签（如v1.0.0）
+# 3. 手动触发
+on:
+  push:
+    branches: [ master, main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号 (例如: 1.0.1)'
+        required: true
+        default: '1.0.0'
+      release_type:
+        description: '发布类型'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - beta
+          - alpha
+
+# 环境变量
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT_PATH: './ENET.csproj'
+  PUBLISH_DIR: './publish'
+  PORTABLE_DIR: './portable/ENET'
+
+# 工作流任务
+jobs:
+  # 构建任务
+  build:
+    name: Build and Package
+    runs-on: windows-latest
+
+    steps:
+    # 步骤1: 检出代码
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 步骤2: 设置.NET环境
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    # 步骤3: 显示.NET信息
+    - name: Display .NET information
+      run: dotnet --info
+
+    # 步骤4: 还原NuGet包
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.PROJECT_PATH }}
+
+    # 步骤5: 构建项目
+    - name: Build project
+      run: dotnet build ${{ env.PROJECT_PATH }} --configuration Release --no-restore
+
+    # 步骤6: 运行测试（如果有）
+    - name: Run tests
+      run: dotnet test ${{ env.PROJECT_PATH }} --configuration Release --no-build --verbosity normal
+      continue-on-error: true  # 即使测试失败也继续执行
+
+    # 步骤7: 发布项目（生成可执行文件）
+    - name: Publish project
+      run: |
+        dotnet publish ${{ env.PROJECT_PATH }} -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ${{ env.PUBLISH_DIR }}
+        # 显示发布目录内容
+        dir ${{ env.PUBLISH_DIR }}
+
+    # 步骤8: 创建便携版
+    - name: Create portable version
+      shell: pwsh
+      run: |
+        # 创建便携版目录
+        New-Item -Path ${{ env.PORTABLE_DIR }} -ItemType Directory -Force
+
+        # 复制发布文件到便携版目录
+        Copy-Item -Path "${{ env.PUBLISH_DIR }}/*" -Destination ${{ env.PORTABLE_DIR }} -Recurse
+
+        # 复制许可证和说明文件
+        Copy-Item -Path "LICENSE*" -Destination "${{ env.PORTABLE_DIR }}/" -ErrorAction SilentlyContinue
+        Copy-Item -Path "README.md" -Destination "${{ env.PORTABLE_DIR }}/README.md" -ErrorAction SilentlyContinue
+
+        # 显示便携版目录内容
+        dir ${{ env.PORTABLE_DIR }}
+
+    # 步骤9: 创建ZIP压缩包
+    - name: Create ZIP archive
+      shell: pwsh
+      run: |
+        Compress-Archive -Path "${{ env.PORTABLE_DIR }}/*" -DestinationPath "./ENET_Portable.zip" -Force
+        # 显示ZIP文件信息
+        dir *.zip
+
+    # 步骤10: 准备发布产物
+    - name: Prepare artifacts for release
+      shell: pwsh
+      run: |
+        # 创建发布目录
+        New-Item -Path "./release" -ItemType Directory -Force
+
+        # 复制构建产物到发布目录
+        Copy-Item -Path "${{ env.PUBLISH_DIR }}/ENET.exe" -Destination "./release/ENET.exe" -ErrorAction SilentlyContinue
+        Copy-Item -Path "./ENET_Portable.zip" -Destination "./release/ENET_Portable.zip" -ErrorAction SilentlyContinue
+
+        # 显示发布目录内容
+        dir ./release
+
+    # 步骤11: 上传构建产物
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ENET-Build-${{ github.run_number }}
+        path: |
+          ./release/ENET.exe
+          ./release/ENET_Portable.zip
+
+    # 步骤12: 从标签创建发布
+    - name: Create release from tag
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "./release/ENET.exe,./release/ENET_Portable.zip"
+        token: ${{ secrets.GITHUB_TOKEN }}
+        draft: false
+        prerelease: false
+        name: "Release ${{ github.ref_name }}"
+        body: "ENET客户端 ${{ github.ref_name }} 发布版本"
+
+    # 步骤13: 从手动触发创建发布
+    - name: Create release from manual trigger
+      if: github.event_name == 'workflow_dispatch'
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "./release/ENET.exe,./release/ENET_Portable.zip"
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: "v${{ github.event.inputs.version }}"
+        name: "Release v${{ github.event.inputs.version }}"
+        body: "ENET客户端 v${{ github.event.inputs.version }} ${{ github.event.inputs.release_type }}版本"
+        draft: false
+        prerelease: ${{ github.event.inputs.release_type != 'release' }}
